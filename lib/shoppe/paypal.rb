@@ -48,8 +48,8 @@ module Shoppe
         end
 
         # Refund the PayPal transaction
-        Shoppe::Payment.before_refund do
-          if self.method == "PayPal"
+        Shoppe::Payment.before_create do
+          if self.refund? && self.parent && self.parent.confirmed? && self.method == "PayPal"
             Shoppe::Paypal.setup_paypal
 
             begin
@@ -57,7 +57,7 @@ module Shoppe
               @refund  = @sale.refund({
                 :amount => {
                   :currency => Shoppe::Paypal.currency,
-                  :total => "#{'%.2f' % self.refundable_amount}"}
+                  :total => "#{'%.2f' % self.amount.abs}"}
               })
 
               # Check refund status
